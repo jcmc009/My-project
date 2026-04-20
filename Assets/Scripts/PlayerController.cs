@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Animator animator;
     private int cherriesCount=0;
+     
 [Header("Cherries count")]
     [SerializeField] private TextMeshProUGUI cherryCountText;
 
@@ -75,6 +76,7 @@ public class PlayerController : MonoBehaviour
                         if (toque.deltaPosition.y > 10f)
                         {
                             quiereSaltar = true;
+			audioSource.Play(); 
                         }
                     }
                 }
@@ -142,4 +144,20 @@ public class PlayerController : MonoBehaviour
             Destroy(collision.gameObject);
         }
     }
+ // --- MÉTODOS DE GESTIÓN GLOBAL ---
+
+     //public void SumarColeccionable(int cantidad)
+    //{
+     //   coleccionablesRecogidos += cantidad;
+   //     Debug.Log("Coleccionables totales: " + coleccionablesRecogidos);
+   // }
+
+    //public void RestarVida()
+   // {
+       // vidas--;
+       // if (vidas <= 0)
+       // {
+       //     MostrarGameOver(); // Llama a la pantalla roja cuando las vidas llegan a 0
+        //}
+    //}
 }

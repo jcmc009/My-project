@@ -52,35 +52,30 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject); 
         }
     }
-
-    // --- MÉTODOS DE GESTIÓN GLOBAL ---
-
-    public void CargarEscena(string nombreDeLaEscena)
+    // --MÉTODO CARGAR NIVEL--
+ public void cargarNivel()
     {
-        SceneManager.LoadScene(nombreDeLaEscena);
+        SceneManager.LoadScene("Juego");
     }
 
-    public void SumarColeccionable(int cantidad)
-    {
-        coleccionablesRecogidos += cantidad;
-        Debug.Log("Coleccionables totales: " + coleccionablesRecogidos);
-    }
-
-    public void RestarVida()
-    {
-        vidas--;
-        if (vidas <= 0)
-        {
-            MostrarGameOver(); // Llama a la pantalla roja cuando las vidas llegan a 0
-        }
-    }
-
+ 
     // --- MÉTODOS DE GESTIÓN DE MÚSICA ---
 
     public void ReproducirMusica()
     {
         musicaPermitida = true; // El jugador SÍ quiere música
 
+        // RED DE SEGURIDAD: Si hemos perdido el altavoz, lo buscamos de nuevo
+        if (musicaFondo == null)
+        {
+            GameObject objetoMusica = GameObject.Find("Audio Source Menú principal");
+            if (objetoMusica != null)
+            {
+                musicaFondo = objetoMusica.GetComponent<AudioSource>();
+            }
+        }
+
+        // Si por fin tenemos altavoz y no está sonando ya, le damos al Play
         if (musicaFondo != null && !musicaFondo.isPlaying)
         {
             musicaFondo.volume = 1;
@@ -89,24 +84,26 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void PausarMusica()
-    {
-        if (musicaFondo != null && musicaFondo.isPlaying)
-        {
-            musicaFondo.Pause();
-            Debug.Log("⏸️ Música en pausa");
-        }
-    }
-
     public void DetenerMusica()
     {
         musicaPermitida = false; // El jugador NO quiere música
 
+        // RED DE SEGURIDAD: Lo buscamos por si se ha perdido
+        if (musicaFondo == null)
+        {
+            GameObject objetoMusica = GameObject.Find("Audio Source Menú principal");
+            if (objetoMusica != null)
+            {
+                musicaFondo = objetoMusica.GetComponent<AudioSource>();
+            }
+        }
+
+        // Si tenemos altavoz, lo callamos
         if (musicaFondo != null)
         {
-            musicaFondo.volume = 0; // Forzamos volumen 0 para evitar tiempos de de-clipping
-            musicaFondo.Stop();
-            Debug.Log("⏹️ ¡Música detenida con éxito desde el menú!");
+            musicaFondo.volume = 0; 
+            musicaFondo.Pause(); // Usamos Pause en lugar de Stop para que cuando vuelva a sonar, siga por donde iba
+            Debug.Log("⏹️ ¡Música detenida con éxito!");
         }
     }
 
@@ -182,10 +179,10 @@ public class GameManager : MonoBehaviour
     }
 
     public void VolverAlMenuPrincipal()
-    {
-        Time.timeScale = 1f; // Descongela el tiempo
-        SceneManager.LoadScene("MenuPrincipal"); 
-    }
+{
+    SceneManager.LoadScene("MenuPrincipal"); 
+ Debug.Log("Botón pulsado"); 
+}
 
     // --- MÉTODO PARA SALIR DEL JUEGO ---
     public void SalirJuego()
@@ -193,5 +190,23 @@ public class GameManager : MonoBehaviour
 	Application.Quit(); 
         Debug.Log("Cerrando el juego..."); 
         
+    }
+  public void IniciarJuego()
+    {
+        Time.timeScale = 1f; // Descongela el tiempo
+        SceneManager.LoadScene("Nivel"); 
+ Debug.Log("Botón pulsado"); 
+    }
+  public void cargarCreditos()
+    {
+//        Time.timeScale = 1f; // Descongela el tiempo
+        SceneManager.LoadScene("Creditos"); 
+ Debug.Log("Botón pulsado"); 
+    }
+ public void cargarAjustes()
+    {
+//        Time.timeScale = 1f; // Descongela el tiempo
+        SceneManager.LoadScene("Ajustes"); 
+ Debug.Log("Botón pulsado"); 
     }
 }
