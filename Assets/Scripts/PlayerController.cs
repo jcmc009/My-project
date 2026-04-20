@@ -10,7 +10,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Efectos de Sonido")]
     public AudioClip coinSoundEffect;  
-    public AudioClip jumpSoundEffect; // <-- AÑADIDO: Hueco para el sonido del salto
+    public AudioClip jumpSoundEffect; 
     private AudioSource audioSource; 
 
     private Rigidbody2D rb;
@@ -23,7 +23,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI cherryCountText;
     [SerializeField] private TextMeshProUGUI liveCountText;
 
-
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -34,7 +33,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // --- 1. SINCRONIZAR TEXTOS CON EL GAMEMANAGER---
+        // --- 1. SINCRONIZAR TEXTOS CON EL GAMEMANAGER ---
         if (GameManager.Instance != null)
         {
             if (cherryCountText != null) 
@@ -76,7 +75,6 @@ public class PlayerController : MonoBehaviour
                         if (toque.deltaPosition.y > 10f)
                         {
                             quiereSaltar = true;
-                            // ¡Sonido eliminado de aquí para evitar fallos!
                         }
                     }
                 }
@@ -102,16 +100,30 @@ public class PlayerController : MonoBehaviour
         rb.AddForce(Vector2.up * fuerzaSalto, ForceMode2D.Impulse);
         enSuelo = false;
         
-        // Sonido de salto limpio (solo suena 1 vez al saltar)
         if (jumpSoundEffect != null && audioSource != null)
         {
             audioSource.PlayOneShot(jumpSoundEffect);
         }
     }
 
+    // --- CHOQUES FÍSICOS (Suelo y enemigos sólidos) ---
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Suelo")) enSuelo = true;
+        if (collision.gameObject.CompareTag("Suelo")) 
+        {
+            enSuelo = true;
+        }
+
+        // NUEVO: Si chocamos físicamente contra un enemigo (como el escarabajo)
+        if (collision.gameObject.CompareTag("Enemigo"))
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.RestarVida();
+                Debug.Log("¡Colisión con escarabajo! Vida restada.");
+            }
+		Destroy(collision.gameObject);
+        }
     }
 
     private void OnCollisionStay2D(Collision2D collision)
@@ -119,7 +131,7 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Suelo")) enSuelo = true;
     }
 
-    // --- DETECCIÓN DE CEREZAS ---
+    // --- CHOQUES FANTASMA (Cerezas y enemigos que son Trigger) ---
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.CompareTag("collectible"))
@@ -129,13 +141,23 @@ public class PlayerController : MonoBehaviour
                 audioSource.PlayOneShot(coinSoundEffect);
             }
 
-            // Le decimos al GameManager que sume la cereza
             if (GameManager.Instance != null)
             {
                 GameManager.Instance.coleccionablesRecogidos++;
             }
 
             Destroy(collision.gameObject);
+        }
+
+        // NUEVO: Por si configuras algún enemigo volador como Trigger
+        if (collision.gameObject.CompareTag("Enemigo"))
+        {
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.RestarVida();
+                Debug.Log("¡Un enemigo me ha tocado! Vida restada.");
+		Destroy(collision.gameObject);
+            }
         }
     }
 }
