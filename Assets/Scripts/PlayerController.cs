@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -15,6 +16,10 @@ public class PlayerController : MonoBehaviour
     private bool enSuelo = true; 
     private SpriteRenderer spriteRenderer;
     private Animator animator;
+    private int cherriesCount=0;
+[Header("Cherries count")]
+    [SerializeField] private TextMeshProUGUI cherryCountText;
+
 
     void Start()
     {
@@ -22,6 +27,7 @@ public class PlayerController : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
 	audioSource = GetComponent<AudioSource>();
+	cherryCountText.text=cherriesCount.ToString();
     }
 
     void Update()
@@ -124,15 +130,13 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("collectible"))
         {
             if (coinSoundEffect!= null)
-            {
+          {
                 audioSource.PlayOneShot(coinSoundEffect);
-		Debug.Log("cereza conseguida"); 
+		
             }
-	    // 1. Sumamos 1 al GameManager (esto actualizará el texto en pantalla)
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.SumarColeccionable(1);
-            }
+	    Debug.Log("cereza conseguida"); 
+		cherriesCount++;
+		cherryCountText.text=cherriesCount.ToString();
 
             // 2. Destruimos el objeto de la escena
             Destroy(collision.gameObject);
