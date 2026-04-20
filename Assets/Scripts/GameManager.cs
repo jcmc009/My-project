@@ -17,10 +17,10 @@ public class GameManager : MonoBehaviour
     public bool musicaPermitida = true; // Por defecto, la música está permitida al abrir el juego
 
     [Header("Pantallas de Fin de Juego")]
-    public GameObject pantallaDerrota;
-    public GameObject pantallaVictoria;
     public TextMeshProUGUI textoResumenVidas;
     public TextMeshProUGUI textoResumenColeccionables;
+    [Header("Referencias UI")]
+    public GameObject panelGameOver;
 
     private void Awake()
     {
@@ -142,20 +142,14 @@ public class GameManager : MonoBehaviour
 
     // --- MÉTODOS DE FIN DE PARTIDA ---
 
-    public void MostrarGameOver()
+    
+   public void ActivarGameOver()
     {
-        pantallaDerrota.SetActive(true); // Enciende la pantalla
-        Time.timeScale = 0f; // Congela el tiempo del juego para que los enemigos se paren
-    }
+        // 1. Nos aseguramos de que el tiempo corra normal para que la nueva escena funcione
+        Time.timeScale = 1f; 
 
-    public void MostrarVictoria()
-    {
-        pantallaVictoria.SetActive(true); // Enciende la pantalla
-        Time.timeScale = 0f; // Congela el juego
-        
-        // Actualiza el resumen de la partida
-        textoResumenVidas.text = "Vidas restantes: " + vidas;
-        textoResumenColeccionables.text = "Coleccionables: " + coleccionablesRecogidos;
+        // 2. Cargamos la escena de derrota
+        SceneManager.LoadScene("PantallaGameOver"); 
     }
 
     public void ReintentarNivel()
@@ -207,7 +201,7 @@ public void RestarVida()
         // Si las vidas llegan a 0, mostramos la pantalla de derrota
         if (vidas <= 0)
         {
-            MostrarGameOver();
+            ActivarGameOver();
         }
          
     }
