@@ -7,160 +7,135 @@ public class PlayerController : MonoBehaviour
     [Header("Ajustes de Movimiento")]
     public float velocidad = 5f;
     public float fuerzaSalto = 5f;
-[Header("Efectos de Sonido")]
+
+    [Header("Efectos de Sonido")]
     public AudioClip coinSoundEffect;  
-    private AudioSource audioSource; // El "altavoz" del zorro
+    public AudioClip jumpSoundEffect; // <-- AÑADIDO: Hueco para el sonido del salto
+    private AudioSource audioSource; 
 
     private Rigidbody2D rb;
     private float movimientoHorizontal = 0f;
     private bool enSuelo = true; 
     private SpriteRenderer spriteRenderer;
     private Animator animator;
-    private int cherriesCount=0;
-    private int livesCount = 3;
      
-[Header("Cherries count")]
+    [Header("Interfaz (HUD)")]
     [SerializeField] private TextMeshProUGUI cherryCountText;
-[Header("Lives count")]
     [SerializeField] private TextMeshProUGUI liveCountText;
+
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
-	audioSource = GetComponent<AudioSource>();
-	cherryCountText.text=cherriesCount.ToString();
-	liveCountText.text = livesCount.ToString();
+        audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
     {
-        // Variables temporales para este frame
+        // --- 1. SINCRONIZAR TEXTOS CON EL GAMEMANAGER---
+        if (GameManager.Instance != null)
+        {
+            if (cherryCountText != null) 
+                cherryCountText.text = GameManager.Instance.coleccionablesRecogidos.ToString();
+                
+            if (liveCountText != null) 
+                liveCountText.text = GameManager.Instance.vidas.ToString();
+        }
+
+        // --- 2. LÓGICA DE MOVIMIENTO ---
         float nuevoMovimiento = 0f; 
         bool quiereSaltar = false;
 
-        // --- GESTIÓN DE ANIMACIONES ---
         animator.SetBool("isRunning", rb.linearVelocityX != 0); 
-        
-        // SALTO: No está en el suelo y su velocidad Y es positiva (va hacia arriba)
         animator.SetBool("isJumping", !enSuelo && rb.linearVelocity.y > 0.1f);
-        
-        // CAÍDA: No está en el suelo y su velocidad Y es negativa (va hacia abajo)
         animator.SetBool("isFalling", !enSuelo && rb.linearVelocity.y < -0.1f);
 
-
-        // 1. Comprobar si hay dedos tocando la pantalla
         if (Input.touchCount > 0)
         {
-            // Recorremos todos los dedos en la pantalla
             for (int i = 0; i < Input.touchCount; i++)
             {
                 Touch toque = Input.GetTouch(i);
 
-                // --- MOVIMIENTO LATERAL (Dividimos la pantalla por la mitad) ---
                 if (toque.position.x < Screen.width / 2f)
                 {
-                    nuevoMovimiento = -1f; // Mitad izquierda
+                    nuevoMovimiento = -1f; 
                     spriteRenderer.flipX = true;
                 }
                 else if (toque.position.x > Screen.width / 2f) 
                 {
-                    nuevoMovimiento = 1f;  // Mitad derecha
+                    nuevoMovimiento = 1f;  
                     spriteRenderer.flipX = false;
                 }
 
-                // --- SALTO (Swipe hacia arriba con 2 dedos) ---
                 if (Input.touchCount > 1) 
                 {
                     if (toque.phase == TouchPhase.Moved)
                     {
-                        // Si cualquiera de los dedos desliza hacia arriba rápidamente
                         if (toque.deltaPosition.y > 10f)
                         {
                             quiereSaltar = true;
-			audioSource.Play(); 
+                            // ¡Sonido eliminado de aquí para evitar fallos!
                         }
                     }
                 }
             }
         }
 
-        // Asignamos el movimiento calculado (evita el bug de sobrescritura multitáctil)
         movimientoHorizontal = nuevoMovimiento;
 
-        // Ejecutamos el salto si deslizó el dedo Y está tocando el suelo
         if (quiereSaltar && enSuelo)
         {
-            Debug.Log("🚀 ¡Saltando con swipe! Fuerza aplicada: " + fuerzaSalto);
             Saltar();
         }
     }
 
     void FixedUpdate()
     {
-        // Aplicamos el cálculo a las físicas reales del personaje
         rb.linearVelocity = new Vector2(movimientoHorizontal * velocidad, rb.linearVelocity.y);
     }
 
     void Saltar()
     {
-        // Reseteamos la Y a 0 por seguridad y aplicamos el impulso
         rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
         rb.AddForce(Vector2.up * fuerzaSalto, ForceMode2D.Impulse);
         enSuelo = false;
+        
+        // Sonido de salto limpio (solo suena 1 vez al saltar)
+        if (jumpSoundEffect != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(jumpSoundEffect);
+        }
     }
 
-    // --- DETECCIÓN DE SUELO ---
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Suelo"))
-        {
-            enSuelo = true;
-        }
+        if (collision.gameObject.CompareTag("Suelo")) enSuelo = true;
     }
 
     private void OnCollisionStay2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Suelo"))
-        {
-            enSuelo = true;
-        }
-
+        if (collision.gameObject.CompareTag("Suelo")) enSuelo = true;
     }
-// --- DETECCIÓN DE COLECCIONABLES Y DAÑO (Triggers) ---
+
+    // --- DETECCIÓN DE CEREZAS ---
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Si tocamos un coleccionable
         if (collision.gameObject.CompareTag("collectible"))
         {
-            if (coinSoundEffect!= null)
-          {
+            if (coinSoundEffect != null && audioSource != null)
+            {
                 audioSource.PlayOneShot(coinSoundEffect);
-		
             }
-	    Debug.Log("cereza conseguida"); 
-		cherriesCount++;
-		cherryCountText.text=cherriesCount.ToString();
 
-            // 2. Destruimos el objeto de la escena
+            // Le decimos al GameManager que sume la cereza
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.coleccionablesRecogidos++;
+            }
+
             Destroy(collision.gameObject);
         }
     }
- // --- MÉTODOS DE GESTIÓN GLOBAL ---
-
-     //public void SumarColeccionable(int cantidad)
-    //{
-     //   coleccionablesRecogidos += cantidad;
-   //     Debug.Log("Coleccionables totales: " + coleccionablesRecogidos);
-   // }
-
-    //public void RestarVida()
-   // {
-       // vidas--;
-       // if (vidas <= 0)
-       // {
-       //     MostrarGameOver(); // Llama a la pantalla roja cuando las vidas llegan a 0
-        //}
-    //}
 }

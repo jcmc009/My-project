@@ -199,4 +199,16 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene("Ajustes"); 
  Debug.Log("Botón pulsado"); 
     }
+public void RestarVida()
+    {
+        vidas--;
+        Debug.Log("Vidas restantes: " + vidas);
+
+        // Si las vidas llegan a 0, mostramos la pantalla de derrota
+        if (vidas <= 0)
+        {
+            MostrarGameOver();
+        }
+         
+    }
 }
