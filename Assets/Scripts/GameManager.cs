@@ -24,32 +24,35 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        // 3. Configurar el Singleton y el DontDestroyOnLoad
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject); 
 
-            // Buscar el reproductor de música automáticamente
             if (musicaFondo == null)
             {
                 GameObject objetoMusica = GameObject.Find("Audio Source Menú principal");
-                
                 if (objetoMusica != null)
                 {
                     musicaFondo = objetoMusica.GetComponent<AudioSource>();
-                    //Debug.Log("¡Reproductor de música enlazado automáticamente!");
-                }
-                else
-                {
-                    Debug.LogError("❌ No encuentro el 'Audio Source Menú principal'. Revisa mayúsculas, minúsculas o espacios extra.");
+                    objetoMusica.transform.SetParent(this.transform);
                 }
             }
         }
         else
         {
-            // Si ya existe un GameManager, destruye este duplicado
-            Destroy(gameObject); 
+            // EL RADAR MEJORADO: Buscamos TODOS los altavoces de la escena
+            AudioSource[] todosLosAudios = FindObjectsOfType<AudioSource>();
+            
+            foreach (AudioSource audio in todosLosAudios)
+            {
+                // Si se llama igual, pero NO tiene padre (es decir, es el clon nuevo, no el que viaja con el GameManager original)
+                if (audio.gameObject.name == "Audio Source Menú principal" && audio.transform.parent == null)
+                {
+                    // ¡Destruimos al clon ruidoso!
+                    Destroy(audio.gameObject);
+                }
+            }
         }
     }
     // --MÉTODO CARGAR NIVEL--
@@ -61,49 +64,36 @@ public class GameManager : MonoBehaviour
  
     // --- MÉTODOS DE GESTIÓN DE MÚSICA ---
 
-    public void ReproducirMusica()
+  public void ReproducirMusica()
     {
-        musicaPermitida = true; // El jugador SÍ quiere música
-
-        // RED DE SEGURIDAD: Si hemos perdido el altavoz, lo buscamos de nuevo
-        if (musicaFondo == null)
-        {
-            GameObject objetoMusica = GameObject.Find("Audio Source Menú principal");
-            if (objetoMusica != null)
-            {
-                musicaFondo = objetoMusica.GetComponent<AudioSource>();
-            }
+               if (this != Instance) 
+        { 
+            Instance.ReproducirMusica(); 
+            return; 
         }
 
-        // Si por fin tenemos altavoz y no está sonando ya, le damos al Play
-        if (musicaFondo != null && !musicaFondo.isPlaying)
+        musicaPermitida = true; 
+        if (musicaFondo != null)
         {
-            musicaFondo.volume = 1;
-            musicaFondo.Play();
-            Debug.Log("▶️ Reproduciendo música con volumen al máximo");
+            musicaFondo.mute = false; 
+            if (!musicaFondo.isPlaying) musicaFondo.Play();
+            Debug.Log("▶️ Música activada");
         }
     }
 
-    public void DetenerMusica()
+   public void DetenerMusica()
     {
-        musicaPermitida = false; // El jugador NO quiere música
-
-        // RED DE SEGURIDAD: Lo buscamos por si se ha perdido
-        if (musicaFondo == null)
-        {
-            GameObject objetoMusica = GameObject.Find("Audio Source Menú principal");
-            if (objetoMusica != null)
-            {
-                musicaFondo = objetoMusica.GetComponent<AudioSource>();
-            }
+              if (this != Instance) 
+        { 
+            Instance.DetenerMusica(); 
+            return; 
         }
 
-        // Si tenemos altavoz, lo callamos
+        musicaPermitida = false; 
         if (musicaFondo != null)
         {
-            musicaFondo.volume = 0; 
-            musicaFondo.Pause(); // Usamos Pause en lugar de Stop para que cuando vuelva a sonar, siga por donde iba
-            Debug.Log("⏹️ ¡Música detenida con éxito!");
+            musicaFondo.mute = true; 
+            Debug.Log("⏹️ Música silenciada");
         }
     }
 
