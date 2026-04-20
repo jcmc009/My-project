@@ -17,10 +17,12 @@ public class PlayerController : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private Animator animator;
     private int cherriesCount=0;
+    private int livesCount = 3;
      
 [Header("Cherries count")]
     [SerializeField] private TextMeshProUGUI cherryCountText;
-
+[Header("Lives count")]
+    [SerializeField] private TextMeshProUGUI liveCountText;
 
     void Start()
     {
@@ -29,6 +31,7 @@ public class PlayerController : MonoBehaviour
         animator = GetComponent<Animator>();
 	audioSource = GetComponent<AudioSource>();
 	cherryCountText.text=cherriesCount.ToString();
+	liveCountText.text = livesCount.ToString();
     }
 
     void Update()
