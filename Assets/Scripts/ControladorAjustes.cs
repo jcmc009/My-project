@@ -27,4 +27,11 @@ public class ControladorAjustes : MonoBehaviour
             GameManager.Instance.VolverAlMenuPrincipal();
         }
     }
+    public void BotonIniciarJuego()
+    {
+        if (GameManager.Instance != null) 
+        {
+            GameManager.Instance.IniciarJuego();
+        }
+    }
 }

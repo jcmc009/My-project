@@ -2,7 +2,7 @@ using UnityEngine;
 using TMPro;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerController : MonoBehaviour
+public class PantallaVIctoriaController : MonoBehaviour
 {
     [Header("Ajustes de Movimiento")]
     public float velocidad = 5f;
@@ -23,9 +23,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI cherryCountText;
     [SerializeField] private TextMeshProUGUI liveCountText;
 
-    private int cerezasAnteriores = -1;
-    private int vidasAnteriores = -1;
-
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -36,20 +33,14 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // --- 1. SINCRONIZAR TEXTOS (Solo si cambian los valores) ---
+        // --- 1. SINCRONIZAR TEXTOS CON EL GAMEMANAGER ---
         if (GameManager.Instance != null)
         {
-            if (cherryCountText != null && GameManager.Instance.coleccionablesRecogidos != cerezasAnteriores) 
-            {
-                cerezasAnteriores = GameManager.Instance.coleccionablesRecogidos;
-                cherryCountText.text = cerezasAnteriores.ToString();
-            }
+            if (cherryCountText != null) 
+                cherryCountText.text = GameManager.Instance.coleccionablesRecogidos.ToString();
                 
-            if (liveCountText != null && GameManager.Instance.vidas != vidasAnteriores) 
-            {
-                vidasAnteriores = GameManager.Instance.vidas;
-                liveCountText.text = vidasAnteriores.ToString();
-            }
+            if (liveCountText != null) 
+                liveCountText.text = GameManager.Instance.vidas.ToString();
         }
 
         // --- 2. LÓGICA DE MOVIMIENTO ---
@@ -123,6 +114,7 @@ public class PlayerController : MonoBehaviour
             enSuelo = true;
         }
 
+        // NUEVO: Si chocamos físicamente contra un enemigo (como el escarabajo)
         if (collision.gameObject.CompareTag("Enemigo"))
         {
             if (GameManager.Instance != null)
@@ -130,7 +122,7 @@ public class PlayerController : MonoBehaviour
                 GameManager.Instance.RestarVida();
                 Debug.Log("¡Colisión con escarabajo! Vida restada.");
             }
-            Destroy(collision.gameObject);
+		Destroy(collision.gameObject);
         }
     }
 
@@ -139,52 +131,33 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Suelo")) enSuelo = true;
     }
 
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Suelo")) enSuelo = false;
-    }
-
-    // ==========================================
-    // DETECCIÓN DE COLISIONES FANTASMA (TRIGGERS)
-    // ==========================================
+    // --- CHOQUES FANTASMA (Cerezas y enemigos que son Trigger) ---
     private void OnTriggerEnter2D(Collider2D collision)
-{
-    // 1. RECOGER CEREZAS
-    if (collision.gameObject.CompareTag("collectible"))
     {
-        if (coinSoundEffect != null && audioSource != null)
+        if (collision.gameObject.CompareTag("collectible"))
         {
-            audioSource.PlayOneShot(coinSoundEffect);
+            if (coinSoundEffect != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(coinSoundEffect);
+            }
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.coleccionablesRecogidos++;
+            }
+
+            Destroy(collision.gameObject);
         }
 
-        if (GameManager.Instance != null)
+        // NUEVO: Por si configuras algún enemigo volador como Trigger
+        if (collision.gameObject.CompareTag("Enemigo"))
         {
-            GameManager.Instance.AgregarColeccionable(); 
-        }
-
-        Destroy(collision.gameObject);
-    }
-
-    // 2. ENEMIGO TRIGGER
-    if (collision.gameObject.CompareTag("Enemigo"))
-    {
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.RestarVida();
-            Debug.Log("¡Un enemigo me ha tocado! Vida restada.");
-        }
-        Destroy(collision.gameObject); 
-    }
-
-    // 3. TOCAR LA META
-    if (collision.gameObject.CompareTag("Meta"))
-    {
-        Debug.Log("¡Punto de control alcanzado!");
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.ActivarVictoria();
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.RestarVida();
+                Debug.Log("¡Un enemigo me ha tocado! Vida restada.");
+		Destroy(collision.gameObject);
+            }
         }
     }
-}
-
 }

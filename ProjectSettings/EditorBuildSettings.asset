@@ -26,5 +26,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/PantallaGameOver.unity
     guid: bf35fc0c5ddc58a4f991ae55bb96964f
+  - enabled: 1
+    path: Assets/Scenes/PantallaVictoria.unity
+    guid: ef0f5bb1a41bce044a341f84000093c2
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

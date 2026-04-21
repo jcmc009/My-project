@@ -159,7 +159,7 @@ public class GameManager : MonoBehaviour
         coleccionablesRecogidos = 0; // Resetea las monedas
         
         // Recarga la escena en la que estás ahora mismo
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name); 
+        SceneManager.LoadScene("Nivel"); 
     }
 
     public void VolverAlMenuPrincipal()
@@ -178,6 +178,8 @@ public class GameManager : MonoBehaviour
   public void IniciarJuego()
     {
         Time.timeScale = 1f; // Descongela el tiempo
+	vidas = 3; 
+        coleccionablesRecogidos = 0;
         SceneManager.LoadScene("Nivel"); 
  Debug.Log("Botón pulsado"); 
     }
@@ -204,5 +206,26 @@ public void RestarVida()
             ActivarGameOver();
         }
          
+    }
+// Gestiona las cerezas y la victoria por puntos
+    public void AgregarColeccionable()
+    {
+        coleccionablesRecogidos++;
+        Debug.Log("Cerezas totales: " + coleccionablesRecogidos);
+
+        // Si llega a 2 (o más, por seguridad), ganamos
+        if (coleccionablesRecogidos >= 5)
+        {
+            ActivarVictoria();
+        }
+    }
+
+     public void ActivarVictoria()
+    {
+        // Nos aseguramos de que el tiempo corra normal por si estaba pausado
+        Time.timeScale = 1f; 
+        
+        // ¡Cargamos la escena de Victoria!
+        SceneManager.LoadScene("PantallaVictoria"); 
     }
 }
