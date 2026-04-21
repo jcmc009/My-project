@@ -1,27 +1,63 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro; 
+using TMPro;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    // 1. Crear la instancia estática (Patrón Singleton)
     public static GameManager Instance;
 
-    // 2. Variables Globales
     [Header("Estado del Jugador")]
     public int vidas = 3;
     public int coleccionablesRecogidos = 0;
+    public int coleccionablesGanar = 5;
 
     [Header("Gestión de Audio")]
     public AudioSource musicaFondo;
-    public bool musicaPermitida = true; // Por defecto, la música está permitida al abrir el juego
+    public AudioSource efectosSource;
+    public bool musicaPermitida = true; 
+    public bool efectosPermitidos = true; 
 
     [Header("Pantallas de Fin de Juego")]
     public TextMeshProUGUI textoResumenVidas;
     public TextMeshProUGUI textoResumenColeccionables;
+    
     [Header("Referencias UI")]
     public GameObject panelGameOver;
 
+    private bool juegoTerminado = false;
+private void OnEnable()
+{
+    SceneManager.sceneLoaded += AlCargarEscena;
+}
+
+private void OnDisable()
+{
+    SceneManager.sceneLoaded -= AlCargarEscena;
+}
+
+private void AlCargarEscena(Scene escena, LoadSceneMode modo)
+{
+    // Si volvemos al Menú Principal, buscamos los botones y los conectamos
+    if (escena.name == "MenuPrincipal")
+    {
+        VincularBotonesMenu();
+    }
+} 
+private void VincularBotonesMenu()
+{
+    // Buscamos el botón por su nombre en la jerarquía
+    Button btnJugar = GameObject.Find("Comenzar")?.GetComponent<Button>();
+    Button btnAjustes = GameObject.Find("Ajustes")?.GetComponent<Button>();
+    Button btnCreditos = GameObject.Find("Creditos")?.GetComponent<Button>();
+
+    // Si los encuentra, les asigna la función del GameManager Inmortal
+    if (btnJugar != null) btnJugar.onClick.AddListener(IniciarJuego);
+    if (btnAjustes != null) btnAjustes.onClick.AddListener(cargarAjustes);
+    if (btnCreditos != null) btnCreditos.onClick.AddListener(cargarCreditos);
+    
+    Debug.Log("✅ Botones del Menú vinculados automáticamente");
+}
     private void Awake()
     {
         if (Instance == null)
@@ -41,60 +77,64 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            // EL RADAR MEJORADO: Buscamos TODOS los altavoces de la escena
-            AudioSource[] todosLosAudios = FindObjectsOfType<AudioSource>();
-            
+            AudioSource[] todosLosAudios = FindObjectsByType<AudioSource>(FindObjectsInactive.Exclude);
             foreach (AudioSource audio in todosLosAudios)
             {
-                // Si se llama igual, pero NO tiene padre (es decir, es el clon nuevo, no el que viaja con el GameManager original)
                 if (audio.gameObject.name == "Audio Source Menú principal" && audio.transform.parent == null)
                 {
-                    // ¡Destruimos al clon ruidoso!
                     Destroy(audio.gameObject);
                 }
             }
+            
+            Destroy(gameObject); 
         }
     }
-    // --MÉTODO CARGAR NIVEL--
- public void cargarNivel()
+
+    // --- MÉTODOS DE GESTIÓN GLOBAL ---
+    public void cargarNivel() { SceneManager.LoadScene("Juego"); }
+    public void cargarCreditos() { SceneManager.LoadScene("Creditos"); }
+    public void cargarAjustes() { SceneManager.LoadScene("Ajustes"); }
+    public void VolverAlMenuPrincipal() { SceneManager.LoadScene("MenuPrincipal"); }
+    public void SalirJuego() { Application.Quit(); }
+
+    public void IniciarJuego()
     {
-        SceneManager.LoadScene("Juego");
+        Time.timeScale = 1f; 
+        juegoTerminado = false;
+        vidas = 3; 
+        coleccionablesRecogidos = 0;
+        SceneManager.LoadScene("Nivel"); 
     }
 
- 
-    // --- MÉTODOS DE GESTIÓN DE MÚSICA ---
-
-  public void ReproducirMusica()
+    public void ReintentarNivel()
     {
-               if (this != Instance) 
-        { 
-            Instance.ReproducirMusica(); 
-            return; 
-        }
+        Time.timeScale = 1f; 
+        juegoTerminado = false;        
+        vidas = 3; 
+        coleccionablesRecogidos = 0; 
+        SceneManager.LoadScene("Nivel"); 
+    }
 
+    // --- MÉTODOS DE GESTIÓN DE MÚSICA Y EFECTOS ---
+    public void ReproducirMusica()
+    {
+        if (this != Instance) { Instance.ReproducirMusica(); return; }
         musicaPermitida = true; 
         if (musicaFondo != null)
         {
             musicaFondo.mute = false; 
             if (!musicaFondo.isPlaying) musicaFondo.Play();
-            Debug.Log("▶️ Música activada");
         }
+   Debug.Log("🔇 Música ACTIVADA");
     }
 
-   public void DetenerMusica()
+    public void DetenerMusica()
     {
-              if (this != Instance) 
-        { 
-            Instance.DetenerMusica(); 
-            return; 
-        }
-
+        if (this != Instance) { Instance.DetenerMusica(); return; 
+    }
         musicaPermitida = false; 
-        if (musicaFondo != null)
-        {
-            musicaFondo.mute = true; 
-            Debug.Log("⏹️ Música silenciada");
-        }
+        if (musicaFondo != null) musicaFondo.mute = true; 
+   Debug.Log("🔇 Música DESACTIVADA");
     }
 
     public void CambiarMusica(AudioClip nuevaPista)
@@ -103,7 +143,6 @@ public class GameManager : MonoBehaviour
         {
             musicaFondo.Stop();
             musicaFondo.clip = nuevaPista;
-            
             if (musicaPermitida) 
             {
                 musicaFondo.volume = 1;
@@ -117,10 +156,7 @@ public class GameManager : MonoBehaviour
         if (musicaFondo == null)
         {
             GameObject objetoMusica = GameObject.Find("Audio Source Menú principal");
-            if (objetoMusica != null)
-            {
-                musicaFondo = objetoMusica.GetComponent<AudioSource>();
-            }
+            if (objetoMusica != null) musicaFondo = objetoMusica.GetComponent<AudioSource>();
         }
 
         if (musicaFondo != null)
@@ -129,103 +165,65 @@ public class GameManager : MonoBehaviour
             {
                 musicaFondo.volume = 1;
                 musicaFondo.Play();
-                Debug.Log("✅ Comprobación: La música debe sonar y se ha reactivado.");
             }
             else if (!musicaPermitida) 
             {
                 musicaFondo.volume = 0;
                 musicaFondo.Stop();
-                Debug.Log("✅ Comprobación: La música NO debe sonar y se ha silenciado por la fuerza.");
             }
         }
     }
 
-    // --- MÉTODOS DE FIN DE PARTIDA ---
-
-    
-   public void ActivarGameOver()
+    public void ActivarEfectos()
     {
-        // 1. Nos aseguramos de que el tiempo corra normal para que la nueva escena funcione
-        Time.timeScale = 1f; 
-
-        // 2. Cargamos la escena de derrota
-        SceneManager.LoadScene("PantallaGameOver"); 
+        efectosPermitidos = true;
+        Debug.Log("🔊 Efectos ACTIVADOS");
     }
 
-    public void ReintentarNivel()
+    public void DesactivarEfectos()
     {
-        Time.timeScale = 1f; // Descongela el tiempo
-        vidas = 3; // Resetea las vidas
-        coleccionablesRecogidos = 0; // Resetea las monedas
-        
-        // Recarga la escena en la que estás ahora mismo
-        SceneManager.LoadScene("Nivel"); 
+        efectosPermitidos = false;
+        if (efectosSource != null) efectosSource.Stop(); 
+        Debug.Log("🔇 Efectos DESACTIVADOS");
     }
 
-    public void VolverAlMenuPrincipal()
-{
-    SceneManager.LoadScene("MenuPrincipal"); 
- Debug.Log("Botón pulsado"); 
-}
+    public void ReproducirEfecto(AudioClip clipSonido)
+    {
+        if (clipSonido != null && efectosSource != null && efectosPermitidos)
+        {
+            efectosSource.PlayOneShot(clipSonido);
+        }
+    }
 
-    // --- MÉTODO PARA SALIR DEL JUEGO ---
-    public void SalirJuego()
-    {
-	Application.Quit(); 
-        Debug.Log("Cerrando el juego..."); 
-        
-    }
-  public void IniciarJuego()
-    {
-        Time.timeScale = 1f; // Descongela el tiempo
-	vidas = 3; 
-        coleccionablesRecogidos = 0;
-        SceneManager.LoadScene("Nivel"); 
- Debug.Log("Botón pulsado"); 
-    }
-  public void cargarCreditos()
-    {
-//        Time.timeScale = 1f; // Descongela el tiempo
-        SceneManager.LoadScene("Creditos"); 
- Debug.Log("Botón pulsado"); 
-    }
- public void cargarAjustes()
-    {
-//        Time.timeScale = 1f; // Descongela el tiempo
-        SceneManager.LoadScene("Ajustes"); 
- Debug.Log("Botón pulsado"); 
-    }
-public void RestarVida()
+    // --- MÉTODOS DE JUEGO ---
+    public void RestarVida()
     {
         vidas--;
-        Debug.Log("Vidas restantes: " + vidas);
-
-        // Si las vidas llegan a 0, mostramos la pantalla de derrota
-        if (vidas <= 0)
-        {
-            ActivarGameOver();
-        }
-         
+        if (vidas <= 0) ActivarGameOver();
     }
-// Gestiona las cerezas y la victoria por puntos
+
     public void AgregarColeccionable()
     {
         coleccionablesRecogidos++;
-        Debug.Log("Cerezas totales: " + coleccionablesRecogidos);
-
-        // Si llega a 2 (o más, por seguridad), ganamos
-        if (coleccionablesRecogidos >= 5)
-        {
-            ActivarVictoria();
-        }
+        if (coleccionablesRecogidos >= coleccionablesGanar) ActivarVictoria();
     }
 
-     public void ActivarVictoria()
+    public void ActivarVictoria()
     {
-        // Nos aseguramos de que el tiempo corra normal por si estaba pausado
         Time.timeScale = 1f; 
-        
-        // ¡Cargamos la escena de Victoria!
         SceneManager.LoadScene("PantallaVictoria"); 
+    }
+
+    public void ActivarGameOver()
+    {
+        if (juegoTerminado) return;
+        juegoTerminado = true;
+        Time.timeScale = 1f; 
+        Invoke("CargarEscenaDerrota", 0.6f); 
+    }
+
+    private void CargarEscenaDerrota()
+    {
+        SceneManager.LoadScene("PantallaGameOver"); 
     }
 }

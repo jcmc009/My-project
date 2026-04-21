@@ -625,61 +625,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 410745273}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f644eb5d56ebf7c45b8d770ad6875504, type: 3}
+  m_Script: {fileID: 11500000, guid: 1daf14063c926e544a1c708d5c9dcae5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ControladorAjustes
---- !u!1 &429540271
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 429540273}
-  - component: {fileID: 429540272}
-  m_Layer: 0
-  m_Name: GameManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &429540272
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 429540271}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bc2112fc6a3df0a41839a7a233af2377, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  vidas: 3
-  coleccionablesRecogidos: 0
-  musicaFondo: {fileID: 0}
-  musicaPermitida: 1
-  pantallaDerrota: {fileID: 0}
-  pantallaVictoria: {fileID: 0}
-  textoResumenVidas: {fileID: 0}
-  textoResumenColeccionables: {fileID: 0}
---- !u!4 &429540273
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 429540271}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 492.19278, y: 209.0358, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::PuenteAjustes
 --- !u!1 &1451038853
 GameObject:
   m_ObjectHideFlags: 0
@@ -764,8 +712,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 410745280}
-        m_TargetAssemblyTypeName: ControladorAjustes, Assembly-CSharp
-        m_MethodName: BotonVolver
+        m_TargetAssemblyTypeName: PuenteAjustes, Assembly-CSharp
+        m_MethodName: ClickVolverMenu
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -819,5 +767,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 410745279}
   - {fileID: 126970758}
-  - {fileID: 429540273}
   - {fileID: 111826202}

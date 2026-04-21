@@ -34,4 +34,19 @@ public class ControladorAjustes : MonoBehaviour
             GameManager.Instance.IniciarJuego();
         }
     }
+public void BotonEncenderEfectos()
+    {
+        if (GameManager.Instance != null) 
+        {
+            GameManager.Instance.ActivarEfectos();
+        }
+    }
+
+    public void BotonApagarEfectos()
+    {
+        if (GameManager.Instance != null) 
+        {
+            GameManager.Instance.DesactivarEfectos();
+        }
+    }
 }

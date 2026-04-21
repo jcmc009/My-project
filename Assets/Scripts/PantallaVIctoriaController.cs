@@ -27,7 +27,6 @@ public class PantallaVIctoriaController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        animator = GetComponent<Animator>();
         audioSource = GetComponent<AudioSource>();
     }
 

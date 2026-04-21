@@ -11,8 +11,12 @@ public class PlayerController : MonoBehaviour
     [Header("Efectos de Sonido")]
     public AudioClip coinSoundEffect;  
     public AudioClip jumpSoundEffect; 
+    public AudioClip hurtSoundEffect; 
+    public AudioClip winSoundEffect;
+    public AudioClip overSoundEffect;
     private AudioSource audioSource; 
-
+    
+    private bool estaMuerto = false;
     private Rigidbody2D rb;
     private float movimientoHorizontal = 0f;
     private bool enSuelo = true; 
@@ -36,7 +40,25 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // --- 1. SINCRONIZAR TEXTOS (Solo si cambian los valores) ---
+        ActualizarHUD();
+
+        if (estaMuerto) return;
+
+        ManejarMovimientoYAnimaciones();
+    }
+
+    void FixedUpdate()
+    {
+        if (!estaMuerto) 
+        {
+            rb.linearVelocity = new Vector2(movimientoHorizontal * velocidad, rb.linearVelocity.y);
+        }
+    }
+
+    // --- MÉTODOS DE ACTUALIZACIÓN ---
+
+    private void ActualizarHUD()
+    {
         if (GameManager.Instance != null)
         {
             if (cherryCountText != null && GameManager.Instance.coleccionablesRecogidos != cerezasAnteriores) 
@@ -44,15 +66,16 @@ public class PlayerController : MonoBehaviour
                 cerezasAnteriores = GameManager.Instance.coleccionablesRecogidos;
                 cherryCountText.text = cerezasAnteriores.ToString();
             }
-                
             if (liveCountText != null && GameManager.Instance.vidas != vidasAnteriores) 
             {
                 vidasAnteriores = GameManager.Instance.vidas;
                 liveCountText.text = vidasAnteriores.ToString();
             }
         }
+    }
 
-        // --- 2. LÓGICA DE MOVIMIENTO ---
+    private void ManejarMovimientoYAnimaciones()
+    {
         float nuevoMovimiento = 0f; 
         bool quiereSaltar = false;
 
@@ -65,7 +88,8 @@ public class PlayerController : MonoBehaviour
             for (int i = 0; i < Input.touchCount; i++)
             {
                 Touch toque = Input.GetTouch(i);
-
+                
+                // Mover izquierda/derecha
                 if (toque.position.x < Screen.width / 2f)
                 {
                     nuevoMovimiento = -1f; 
@@ -77,30 +101,17 @@ public class PlayerController : MonoBehaviour
                     spriteRenderer.flipX = false;
                 }
 
-                if (Input.touchCount > 1) 
+                // Saltar con deslizamiento hacia arriba (Corregido para que funcione con 1 o más dedos)
+                if (toque.phase == TouchPhase.Moved && toque.deltaPosition.y > 10f)
                 {
-                    if (toque.phase == TouchPhase.Moved)
-                    {
-                        if (toque.deltaPosition.y > 10f)
-                        {
-                            quiereSaltar = true;
-                        }
-                    }
+                    quiereSaltar = true;
                 }
             }
         }
 
         movimientoHorizontal = nuevoMovimiento;
 
-        if (quiereSaltar && enSuelo)
-        {
-            Saltar();
-        }
-    }
-
-    void FixedUpdate()
-    {
-        rb.linearVelocity = new Vector2(movimientoHorizontal * velocidad, rb.linearVelocity.y);
+        if (quiereSaltar && enSuelo) Saltar();
     }
 
     void Saltar()
@@ -109,28 +120,18 @@ public class PlayerController : MonoBehaviour
         rb.AddForce(Vector2.up * fuerzaSalto, ForceMode2D.Impulse);
         enSuelo = false;
         
-        if (jumpSoundEffect != null && audioSource != null)
-        {
-            audioSource.PlayOneShot(jumpSoundEffect);
-        }
+        ReproducirSonido(jumpSoundEffect);
     }
 
-    // --- CHOQUES FÍSICOS (Suelo y enemigos sólidos) ---
+    // --- COLISIONES ---
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Suelo")) 
-        {
-            enSuelo = true;
-        }
+        if (collision.gameObject.CompareTag("Suelo")) enSuelo = true;
 
-        if (collision.gameObject.CompareTag("Enemigo"))
+        if (collision.gameObject.CompareTag("Enemigo") && !estaMuerto)
         {
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.RestarVida();
-                Debug.Log("¡Colisión con escarabajo! Vida restada.");
-            }
-            Destroy(collision.gameObject);
+            ProcesarGolpeEnemigo(collision.gameObject);
         }
     }
 
@@ -144,47 +145,52 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Suelo")) enSuelo = false;
     }
 
-    // ==========================================
-    // DETECCIÓN DE COLISIONES FANTASMA (TRIGGERS)
-    // ==========================================
     private void OnTriggerEnter2D(Collider2D collision)
-{
-    // 1. RECOGER CEREZAS
-    if (collision.gameObject.CompareTag("collectible"))
     {
-        if (coinSoundEffect != null && audioSource != null)
+        if (collision.gameObject.CompareTag("collectible"))
         {
-            audioSource.PlayOneShot(coinSoundEffect);
+            ReproducirSonido(coinSoundEffect);
+            if (GameManager.Instance != null) GameManager.Instance.AgregarColeccionable(); 
+            Destroy(collision.gameObject);
         }
 
-        if (GameManager.Instance != null)
+        if (collision.gameObject.CompareTag("Enemigo") && !estaMuerto)
         {
-            GameManager.Instance.AgregarColeccionable(); 
+            ProcesarGolpeEnemigo(collision.gameObject);
         }
 
-        Destroy(collision.gameObject);
+        if (collision.gameObject.CompareTag("Meta"))
+        {
+            ReproducirSonido(winSoundEffect);
+            if (GameManager.Instance != null) GameManager.Instance.ActivarVictoria();
+        }
     }
 
-    // 2. ENEMIGO TRIGGER
-    if (collision.gameObject.CompareTag("Enemigo"))
+    private void ProcesarGolpeEnemigo(GameObject enemigo)
     {
         if (GameManager.Instance != null)
         {
+            if (GameManager.Instance.vidas <= 1)
+            {
+                estaMuerto = true; 
+                ReproducirSonido(overSoundEffect);
+            }
+            else 
+            {
+                ReproducirSonido(hurtSoundEffect);
+            }
             GameManager.Instance.RestarVida();
-            Debug.Log("¡Un enemigo me ha tocado! Vida restada.");
         }
-        Destroy(collision.gameObject); 
+        Destroy(enemigo); 
     }
 
-    // 3. TOCAR LA META
-    if (collision.gameObject.CompareTag("Meta"))
+    // --- FUNCIÓN DE AYUDA PARA SONIDOS---
+    private void ReproducirSonido(AudioClip clip)
     {
-        Debug.Log("¡Punto de control alcanzado!");
-        if (GameManager.Instance != null)
+        // Esta función hace la comprobación pesada una sola vez para todos
+        if (clip != null && audioSource != null && GameManager.Instance != null && GameManager.Instance.efectosPermitidos)
         {
-            GameManager.Instance.ActivarVictoria();
+            audioSource.PlayOneShot(clip);
         }
     }
-}
-
 }
