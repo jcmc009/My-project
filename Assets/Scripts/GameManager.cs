@@ -95,7 +95,17 @@ private void VincularBotonesMenu()
     public void cargarCreditos() { SceneManager.LoadScene("Creditos"); }
     public void cargarAjustes() { SceneManager.LoadScene("Ajustes"); }
     public void VolverAlMenuPrincipal() { SceneManager.LoadScene("MenuPrincipal"); }
-    public void SalirJuego() { Application.Quit(); }
+    public void SalirJuego() 
+    { 
+        Debug.Log("🛑 Saliendo del juego...");
+        
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        // Si estamos jugando en el móvil o PC ya exportado...
+        #else
+            Application.Quit();
+        #endif
+    }
 
     public void IniciarJuego()
     {
